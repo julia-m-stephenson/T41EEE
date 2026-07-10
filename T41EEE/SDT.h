@@ -306,7 +306,7 @@ extern Bands bands;
 // Configuration data structure.
 struct config_t {
 
-  char versionSettings[10] = "T41EEE.93";  // This is required to be the first!
+  char versionSettings[10] = "E93_JMS1";  // This is required to be the first!
 
   bool AGCMode = true;
   float32_t AGCThreshold = -40.0;
@@ -549,8 +549,16 @@ extern int32_t NCOFreq;  // AFP 04-16-22
 
 // Teensy and OpenAudio objects which need to be global.  Revised by KF5N July 24, 2024
 extern AudioAmplifier volumeAdjust;
+#define JMS_QUAD 1
+#warning // need to find a place for this define 
+#ifdef JMS_QUAD
+#warning // 32Bit  conversion ADC_RX_I/ADC_RX_Q
+extern AudioRecordQueue_F32 ADC_RX_I;  // Receiver I channel from ADC PCM1808, 32 bit.
+extern AudioRecordQueue_F32 ADC_RX_Q;  // Receiver Q channel from ADC PCM1808, 32 bit.
+#else
 extern AudioRecordQueue ADC_RX_I;
 extern AudioRecordQueue ADC_RX_Q;
+#endif
 
 extern AudioRecordQueue_F32 Q_in_L_Ex;
 extern AudioRecordQueue_F32 Q_in_R_Ex;

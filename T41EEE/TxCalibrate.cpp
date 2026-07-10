@@ -1220,8 +1220,16 @@ void TxCalibrate::MakeFFTData() {
           Using arm_Math library, convert to float one buffer_size.
           Float_buffer samples are now standardized from > -1.0 to < 1.0
       **********************************************************************************/
-      arm_q15_to_float(ADC_RX_Q.readBuffer(), &float_buffer_L[BUFFER_SIZE * i], BUFFER_SIZE);  // convert int_buffer to float 32bit
+#define JMS_QUAD 1
+#warning // need to find a place for this define 
+#ifdef JMS_QUAD
+#warning // 32Bit copying with conversion do we need to chnage bloack sixe etc?	  
+      arm_copy_f32(ADC_RX_Q.readBuffer(), &float_buffer_L[BUFFER_SIZE * i], BUFFER_SIZE);  // move input buffer as float 32bit.  BUFFER_SIZE = 128.
+      arm_copy_f32(ADC_RX_I.readBuffer(), &float_buffer_R[BUFFER_SIZE * i], BUFFER_SIZE);  // move input buffer as float 32bit.  BUFFER_SIZE = 128.
+#else
+      arm_q15_to_float(ADC_RX_Q.readBuffer(), &float_buffer_L[BUFFER_SIZE * i], BUFFER_SIZE);  // convert int_buffer to float 32bit.  BUFFER_SIZE = 128.
       arm_q15_to_float(ADC_RX_I.readBuffer(), &float_buffer_R[BUFFER_SIZE * i], BUFFER_SIZE);  // convert int_buffer to float 32bit
+#endif
       ADC_RX_I.freeBuffer();
       ADC_RX_Q.freeBuffer();
     }
