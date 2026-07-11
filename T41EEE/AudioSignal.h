@@ -6,7 +6,7 @@ const int audio_block_samples = 128;   // Always 128
 AudioSettings_F32 audio_settings(sample_rate_Hz, audio_block_samples);
 #define JMS_QUAD 1
 #ifdef JMS_QUAD
-AudioInputI2SQuad_F32 i2s_quadIn_f32;  // 4 inputs available in experimental Open Audio library. Ussing Terrane's code
+AudioInputI2SQuad_F32 i2s_quadIn_f32(audio_settings);  // 4 inputs available in experimental Open Audio library. Ussing Terrane's code
 #else
 AudioInputI2SQuad i2s_quadIn;  // 4 inputs available only in Teensy audio and not Open Audio library.
 #endif
