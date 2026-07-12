@@ -45,7 +45,7 @@ AudioPlayQueue_F32 cwToneData;  // The tone from the CW Exciter.
 #ifdef JMS_QUAD
 #warning //don't need the int2float object so ust connect input straight to mixer
 
-//AudioConnection_F32 connect3(i2s_quadIn_f32, 0, mixer1_tx, 0);  // Connect microphone mixer1 output 0 via gain control.
+AudioConnection_F32 connect3(i2s_quadIn_f32, 0, mixer1_tx, 0);  // Connect microphone mixer1 output 0 via gain control.
 #else
 AudioConnection connect0(i2s_quadIn, 0, int2Float1_tx, 0);  // Microphone audio channel.  Must use int2Float because Open Audio does not have quad input.
 

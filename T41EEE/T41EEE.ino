@@ -1087,7 +1087,7 @@ void loop() {
   long ditTimerOff;  //AFP 09-22-22
   bool cwKeyDown;
   unsigned long cwBlockIndex;
-  /*
+
   Serial.printf("lastState=%d radioState=%d memory_used=%d memory_used_max=%d f32_memory_used=%d f32_memory_used_max=%d\n",
                 lastState,
                 radioState,
@@ -1095,7 +1095,7 @@ void loop() {
                 (int)AudioStream::memory_used_max,
                 (int)AudioStream_F32::f32_memory_used,
                 (int)AudioStream_F32::f32_memory_used_max);
-*/
+
   //  Radio state detection before entering the primary radio loop.
   if (bands.bands[ConfigData.currentBand].mode == RadioMode::SSB_MODE and digitalRead(PTT) == HIGH) radioState = RadioState::SSB_RECEIVE_STATE;
   if (bands.bands[ConfigData.currentBand].mode == RadioMode::SSB_MODE and digitalRead(PTT) == LOW) radioState = RadioState::SSB_TRANSMIT_STATE;
