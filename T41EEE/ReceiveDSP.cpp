@@ -28,10 +28,13 @@ bool ReceiveDSP::ProcessIQData() {
   uint32_t AudioMaxIndex;
   float rfGainValue;
   int rfGain;
-
+  /*Serial.printf("ADC_RX_I.available=%d ADC_RX_Q.available=%d \n",
+                ADC_RX_I.available(),
+                ADC_RX_Q.available() );*/
   // Are there at least N_BLOCKS buffers in each channel available ?  N_BLOCKS should be 16.  Fill float_buffer_L/R[2048].
   if (static_cast<uint32_t>(ADC_RX_I.available()) > 15 && static_cast<uint32_t>(ADC_RX_Q.available()) > 15) {
     usec = 0;
+	
     // Get audio samples from the audio  buffers and convert them to float.
     // Read in 16 blocks and 128 samples in I and Q.  16 * 128 = 2048  (N_BLOCKS = 16)
     for (unsigned i = 0; i < N_BLOCKS; i++) {
