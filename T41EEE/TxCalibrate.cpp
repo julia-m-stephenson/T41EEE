@@ -1223,7 +1223,6 @@ void TxCalibrate::MakeFFTData() {
 #define JMS_QUAD 1
 #warning // need to find a place for this define 
 #ifdef JMS_QUAD
-#warning // 32Bit copying with conversion do we need to chnage bloack sixe etc?	  
       arm_copy_f32(ADC_RX_Q.readBuffer(), &float_buffer_L[BUFFER_SIZE * i], BUFFER_SIZE);  // move input buffer as float 32bit.  BUFFER_SIZE = 128.
       arm_copy_f32(ADC_RX_I.readBuffer(), &float_buffer_R[BUFFER_SIZE * i], BUFFER_SIZE);  // move input buffer as float 32bit.  BUFFER_SIZE = 128.
 #else

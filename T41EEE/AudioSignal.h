@@ -16,7 +16,7 @@ AudioOutputI2SQuad_F32 i2s_quadOut_f32(audio_settings);
 
 AudioControlSGTL5000 sgtl5000_1;   
 #ifdef JMS_QUAD // Controller for the Teensy Audio Adapter.
-#warning //not neeeded
+//not neeeded float conversion done in AudioInputI2SQuad_F32
 #else                                               
 AudioConvert_I16toF32 int2Float1_tx;                                              // Converts Int16 to Float.
 #endif
@@ -26,7 +26,7 @@ AudioEffectCompressor2_F32 compressor1;  // Open Audio Compressor
 radioCESSB_Z_transmit_F32 cessb1;
 
 #ifdef JMS_QUAD
-#warning //not neeeded
+//not neeeded float conversion done in AudioInputI2SQuad_F32
 #else                                               
 AudioConvert_F32toI16 float2Int1_tx, float2Int2_tx;  // Converts Float to Int16.  See class in AudioStream_F32.h
 #endif
@@ -43,8 +43,7 @@ AudioPlayQueue_F32 cwToneData;  // The tone from the CW Exciter.
 
 //  Begin transmit signal chain.
 #ifdef JMS_QUAD
-#warning //don't need the int2float object so ust connect input straight to mixer
-
+//don't need the int2float object so just connect input straight to mixer
 AudioConnection_F32 connect3(i2s_quadIn_f32, 0, mixer1_tx, 0);  // Connect microphone mixer1 output 0 via gain control.
 #else
 AudioConnection connect0(i2s_quadIn, 0, int2Float1_tx, 0);  // Microphone audio channel.  Must use int2Float because Open Audio does not have quad input.
@@ -95,7 +94,6 @@ AudioMixer4_F32 mixer4, mixer5;
 AudioSwitch4_OA_F32 switch1_rx, switch2_rx;
 AudioConvert_F32toI16 float2Int3, float2Int4, float2Int5, float2Int6;
 #ifdef JMS_QUAD
-#warning //don't need the 16Bit to 32 conversion???
 AudioRecordQueue_F32 ADC_RX_I(audio_settings);  // Receiver I channel from ADC PCM1808, 32 bit.
 AudioRecordQueue_F32 ADC_RX_Q(audio_settings);  // Receiver Q channel from ADC PCM1808, 32 bit.
 #else
@@ -106,7 +104,6 @@ AudioRecordQueue ADC_RX_Q;  // Receiver Q channel from ADC PCM1808, 16 bit.
 AudioPlayQueue_F32 audioOutQueue;     // Receiver audio out and CW sidetone.
 AudioPlayQueue_F32 sidetoneOutQueue;  // Receiver audio out and CW sidetone.
 #ifdef JMS_QUAD
-#warning //don't need the int2float object???
 AudioConnection_F32 patchCord1(i2s_quadIn_f32, 3, ADC_RX_I, 0);  // Receiver I and Q channel data stream.
 AudioConnection_F32 patchCord2(i2s_quadIn_f32, 2, ADC_RX_Q, 0);  // This data stream goes to sketch code for processing.
 #else
@@ -251,7 +248,8 @@ void SetAudioOperatingState(RadioState operatingState) {
 
       // Connect audio paths
 #ifdef JMS_QUAD
-#warning // Auconnection_F32 doesn't support connect/disconnect WTF???
+     // AudioConnection_F32 doesn't support connect/disconnect 
+	 // Instead the AudioRecordQueue_F32 discards any received data
 #else
       patchCord1.connect();
       patchCord2.connect();
@@ -259,8 +257,8 @@ void SetAudioOperatingState(RadioState operatingState) {
       mixer5.gain(0, 1.0);    // Connect receiver audio from DSP.
       mixer5.gain(1, 0);      // Disconnect CW sidetone.
 #ifdef JMS_QUAD
-#warning //don't need the int2float object so just connect input straight to mixer
-      //connect3.disconnect();  // Disconnect microphone input data stream.
+     // AudioConnection_F32 doesn't support connect/disconnect 
+	 // Instead the AudioRecordQueue_F32 discards any received data
 #else
       connect0.disconnect();  // Disconnect microphone input data stream.
 #endif
@@ -304,7 +302,8 @@ void SetAudioOperatingState(RadioState operatingState) {
       controlAudioOut(ConfigData.audioOut, true);  // Mute all receiver audio.
       sgtl5000_1.unmuteLineout();
 #ifdef JMS_QUAD
-#warning // Auconnection_F32 doesn't support connect/disconnect WTF???
+     // AudioConnection_F32 doesn't support connect/disconnect 
+	 // Instead the AudioRecordQueue_F32 discards any received data
 #else
       patchCord1.disconnect();  // Receiver I channel
       patchCord2.disconnect();  // Receiver Q channel
@@ -312,8 +311,8 @@ void SetAudioOperatingState(RadioState operatingState) {
       mixer5.gain(0, 0);        // Stop receiver audio.
       mixer5.gain(1, 0);        // Stop sidetone audio.
 #ifdef JMS_QUAD
-#warning do we need to do something with connect3????
-      //connect3.connect();       // Connect microphone input data stream.
+     // AudioConnection_F32 doesn't support connect/disconnect 
+	 // Instead the AudioRecordQueue_F32 discards any received data
 #else
       connect0.connect();       // Connect microphone input data stream.
 #endif
@@ -367,11 +366,13 @@ void SetAudioOperatingState(RadioState operatingState) {
       controlAudioOut(AudioState::MUTE_BOTH, true);  // Mute all audio.
       sgtl5000_1.unmuteLineout();
 #ifdef JMS_QUAD
-#warning // Auconnection_F32 doesn't support connect/disconnect WTF???
+     // AudioConnection_F32 doesn't support connect/disconnect 
+	 // Instead the AudioRecordQueue_F32 discards any received data
 #else
       patchCord1.connect();
       patchCord2.connect();
-#endif      mixer5.gain(0, 0);     // Stop receiver audio.
+#endif
+      mixer5.gain(0, 0);     // Stop receiver audio.
       mixer5.gain(1, 0);     // Stop sidetone audio.
       ADC_RX_I.end();
       ADC_RX_I.clear();
@@ -391,8 +392,8 @@ void SetAudioOperatingState(RadioState operatingState) {
       mixer1_tx.gain(2, 0);  // testTone 2 off.
 
 #ifdef JMS_QUAD
-#warning do we need to do something with connect3????
-      //connect3.disconnect();      // Disconnect microphone input data stream.
+     // AudioConnection_F32 doesn't support connect/disconnect 
+	 // Instead the AudioRecordQueue_F32 discards any received data
 #else
       connect0.disconnect();      // Disconnect microphone input data stream.
 #endif
@@ -444,7 +445,8 @@ void SetAudioOperatingState(RadioState operatingState) {
       controlAudioOut(AudioState::MUTE_BOTH, true);  // Mute all audio.
       sgtl5000_1.unmuteLineout();
 #ifdef JMS_QUAD
-#warning // Auconnection_F32 doesn't support connect/disconnect WTF???
+     // AudioConnection_F32 doesn't support connect/disconnect 
+	 // Instead the AudioRecordQueue_F32 discards any received data
 #else
       patchCord1.disconnect();  // Receiver I channel
       patchCord2.disconnect();  // Receiver Q channel
@@ -452,8 +454,8 @@ void SetAudioOperatingState(RadioState operatingState) {
       mixer5.gain(0, 0);        // Stop receiver audio.
       mixer5.gain(1, 0);        // Stop sidetone audio.
 #ifdef JMS_QUAD
-#warning do we need to do something with connect3????
-      //connect3.disconnect();    // Disconnect microphone input data stream.
+     // AudioConnection_F32 doesn't support connect/disconnect 
+	 // Instead the AudioRecordQueue_F32 discards any received data
 #else
       connect0.disconnect();    // Disconnect microphone input data stream.
 #endif
@@ -522,7 +524,8 @@ void SetAudioOperatingState(RadioState operatingState) {
       sgtl5000_1.unmuteLineout();
       // QSD disabled and disconnected
 #ifdef JMS_QUAD
-#warning // Auconnection_F32 doesn't support connect/disconnect WTF???
+     // AudioConnection_F32 doesn't support connect/disconnect 
+	 // Instead the AudioRecordQueue_F32 discards any received data
 #else
       patchCord1.disconnect();  // Receiver I channel
       patchCord2.disconnect();  // Receiver Q channel
@@ -530,8 +533,8 @@ void SetAudioOperatingState(RadioState operatingState) {
       mixer5.gain(0, 0);        // Disconnect receiver audio from DSP.
       mixer5.gain(1, 1.0);      // Connect CW sidetone.
 #ifdef JMS_QUAD
-#warning do we need to do something with connect3????
-      //connect3.disconnect();    // Disconnect microphone input data stream.
+     // AudioConnection_F32 doesn't support connect/disconnect 
+	 // Instead the AudioRecordQueue_F32 discards any received data
 #else
       connect0.disconnect();    // Disconnect microphone input data stream.
 #endif
@@ -595,8 +598,8 @@ void SetAudioOperatingState(RadioState operatingState) {
       controlAudioOut(AudioState::MUTE_BOTH, true);  // Mute all audio.
       sgtl5000_1.unmuteLineout();
 #ifdef JMS_QUAD
-#warning do we need to do something with connect3????
-      //connect3.disconnect();  // Disconnect microphone input data stream.
+     // AudioConnection_F32 doesn't support connect/disconnect 
+	 // Instead the AudioRecordQueue_F32 discards any received data
 #else
       connect0.disconnect();  // Disconnect microphone input data stream.
 #endif
@@ -641,7 +644,8 @@ void SetAudioOperatingState(RadioState operatingState) {
       }
 
 #ifdef JMS_QUAD
-#warning // AudioConnection_F32 doesn't support connect/disconnect WTF???
+     // AudioConnection_F32 doesn't support connect/disconnect 
+	 // Instead the AudioRecordQueue_F32 discards any received data
 #else
       patchCord1.connect();
       patchCord2.connect();
@@ -685,7 +689,8 @@ void SetAudioOperatingState(RadioState operatingState) {
       mixer_rxtx_I.gain(1, 0.0);  // Disconnect headphone path to Audio Adapter.
       mixer_rxtx_Q.gain(1, 0.0);
 #ifdef JMS_QUAD
-#warning // Auconnection_F32 doesn't support connect/disconnect WTF???
+     // AudioConnection_F32 doesn't support connect/disconnect 
+	 // Instead the AudioRecordQueue_F32 discards any received data
 #else
       patchCord1.connect();
       patchCord2.connect();

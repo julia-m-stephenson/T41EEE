@@ -552,7 +552,6 @@ extern AudioAmplifier volumeAdjust;
 #define JMS_QUAD 1
 #warning // need to find a place for this define 
 #ifdef JMS_QUAD
-#warning // 32Bit  conversion ADC_RX_I/ADC_RX_Q
 extern AudioRecordQueue_F32 ADC_RX_I;  // Receiver I channel from ADC PCM1808, 32 bit.
 extern AudioRecordQueue_F32 ADC_RX_Q;  // Receiver Q channel from ADC PCM1808, 32 bit.
 #else
