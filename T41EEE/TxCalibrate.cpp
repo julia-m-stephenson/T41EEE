@@ -1214,14 +1214,12 @@ void TxCalibrate::MakeFFTData() {
 
   // Get audio samples from the audio  buffers and convert them to float.
   // Read in 16 blocks of 128 samples in I and Q if available.
-  if (static_cast<uint32_t>(ADC_RX_I.available()) > 15 and static_cast<uint32_t>(ADC_RX_Q.available()) > 15) {
+  if (static_cast<uint32_t>(ADC_RX_I.available()) > 15 && static_cast<uint32_t>(ADC_RX_Q.available()) > 15) {
     for (unsigned i = 0; i < N_BLOCKS; i++) {
       /**********************************************************************************  AFP 12-31-20
           Using arm_Math library, convert to float one buffer_size.
           Float_buffer samples are now standardized from > -1.0 to < 1.0
       **********************************************************************************/
-#define JMS_QUAD 1
-#warning // need to find a place for this define 
 #ifdef JMS_QUAD
       arm_copy_f32(ADC_RX_Q.readBuffer(), &float_buffer_L[BUFFER_SIZE * i], BUFFER_SIZE);  // move input buffer as float 32bit.  BUFFER_SIZE = 128.
       arm_copy_f32(ADC_RX_I.readBuffer(), &float_buffer_R[BUFFER_SIZE * i], BUFFER_SIZE);  // move input buffer as float 32bit.  BUFFER_SIZE = 128.
@@ -1232,10 +1230,10 @@ void TxCalibrate::MakeFFTData() {
       ADC_RX_I.freeBuffer();
       ADC_RX_Q.freeBuffer();
     }
-
     rfGainValue = pow(10, static_cast<float32_t>(ConfigData.rfGain[ConfigData.currentBand]) / 20);  //AFP 2-11-23
-    arm_scale_f32(float_buffer_L, rfGainValue, float_buffer_L, 2048);                               //AFP 2-11-23
-    arm_scale_f32(float_buffer_R, rfGainValue, float_buffer_R, 2048);                               //AFP 2-11-23
+
+    arm_scale_f32(float_buffer_L, rfGainValue, float_buffer_L, BUFFER_SIZE * N_BLOCKS);  //AFP 2-11-23
+    arm_scale_f32(float_buffer_R, rfGainValue, float_buffer_R, BUFFER_SIZE * N_BLOCKS);  //AFP 2-11-23
 
     // Manual IQ amplitude and phase correction (receive only).
     if (mode == 0) {
@@ -1266,7 +1264,7 @@ void TxCalibrate::MakeFFTData() {
 
     // This process started because there are 2048 samples available.  Perform FFT.
     updateDisplayFlag = true;
-    if (fftActive) ZoomFFTExe(2048);
+    if (fftActive) ZoomFFTExe(BUFFER_SIZE * N_BLOCKS);
     fftSuccess = true;
   }  // End of receive code
   else {

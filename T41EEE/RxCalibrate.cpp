@@ -695,7 +695,6 @@ void RxCalibrate::DoReceiveCalibrate(int calMode, bool radio, bool refine, bool 
 void RxCalibrate::MakeFFTData() {
   float rfGainValue, powerScale;  // AFP 2-11-23.  Greg KF5N February 13, 2023
                                   //  float recBandFactor[7] = { 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0 };  // AFP 2-11-23  KF5N uniform values
-
   /**********************************************************************************  AFP 12-31-20
         Get samples from queue buffers
         Teensy Audio Library stores ADC data in two buffers size=128, Q_in_L and Q_in_R as initiated from the audio lib.
@@ -770,14 +769,12 @@ void RxCalibrate::MakeFFTData() {
 
   // Get I16 audio blocks from the record queues and convert them to float.
   // Read in 16 blocks of 128 samples in I and Q if available.
-  if (static_cast<uint32_t>(ADC_RX_I.available()) > 16 and static_cast<uint32_t>(ADC_RX_Q.available()) > 16) {
-    for (unsigned i = 0; i < 16; i++) {
+  if (static_cast<uint32_t>(ADC_RX_I.available()) > 15 && static_cast<uint32_t>(ADC_RX_Q.available()) > 15) {
+    for (unsigned i = 0; i < N_BLOCKS; i++) {
       /**********************************************************************************  AFP 12-31-20
           Using arm_Math library, convert to float one buffer_size.
           Float_buffer samples are now standardized from > -1.0 to < 1.0
       **********************************************************************************/
-#define JMS_QUAD 1
-#warning // need to find a place for this define 
 #ifdef JMS_QUAD
       arm_copy_f32(ADC_RX_Q.readBuffer(), &float_buffer_L[BUFFER_SIZE * i], BUFFER_SIZE);  // move input buffer as float 32bit.  BUFFER_SIZE = 128.
       arm_copy_f32(ADC_RX_I.readBuffer(), &float_buffer_R[BUFFER_SIZE * i], BUFFER_SIZE);  // move input buffer as float 32bit.  BUFFER_SIZE = 128.
@@ -788,7 +785,6 @@ void RxCalibrate::MakeFFTData() {
       ADC_RX_I.freeBuffer();
       ADC_RX_Q.freeBuffer();
     }
-
     rfGainValue = pow(10, (float)ConfigData.rfGain[ConfigData.currentBand] / 20);        //AFP 2-11-23
     arm_scale_f32(float_buffer_L, rfGainValue, float_buffer_L, BUFFER_SIZE * N_BLOCKS);  //AFP 2-11-23
     arm_scale_f32(float_buffer_R, rfGainValue, float_buffer_R, BUFFER_SIZE * N_BLOCKS);  //AFP 2-11-23
