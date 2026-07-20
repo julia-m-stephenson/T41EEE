@@ -262,7 +262,6 @@ void SetAudioOperatingState(RadioState operatingState) {
       mixer5.gain(0, 1.0);    // Connect receiver audio from DSP.
       mixer5.gain(1, 0);      // Disconnect CW sidetone.
 #ifdef JMS_QUAD
-#warning new stuff
 	 switchMicMute.setChannel(1);// Bypass tx audio chain, mic straight to micBitBucket
 #else
       connect0.disconnect();  // Disconnect microphone input data stream.
@@ -324,7 +323,6 @@ void SetAudioOperatingState(RadioState operatingState) {
       ADC_RX_Q.end();
       ADC_RX_Q.clear();
 #ifdef JMS_QUAD
-#warning new stuff
 	 switchMicMute.setChannel(0);  // Connect Mic to tx audio chain  
 #endif
  
@@ -398,7 +396,9 @@ void SetAudioOperatingState(RadioState operatingState) {
 
 #ifdef JMS_QUAD
      // AudioConnection_F32 doesn't support connect/disconnect 
-	 switchMicMute.setChannel(1);  // Bypass tx audio chain straight to micBitBucket
+	 //switchMicMute.setChannel(1);  // Bypass tx audio chain straight to micBitBucket
+	 switchMicMute.setChannel(0);  // May need tx audio chain to be running so tones are generated???
+	 
 #else
       connect0.disconnect();      // Disconnect microphone input data stream.
 #endif
@@ -602,7 +602,6 @@ void SetAudioOperatingState(RadioState operatingState) {
       controlAudioOut(AudioState::MUTE_BOTH, true);  // Mute all audio.
       sgtl5000_1.unmuteLineout();
 #ifdef JMS_QUAD
-#warning new stuff
 	 switchMicMute.setChannel(1);  // Bypass tx audio chain straight to micBitBucket
 #else
       connect0.disconnect();  // Disconnect microphone input data stream.
