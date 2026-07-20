@@ -7,6 +7,11 @@ AudioSettings_F32 audio_settings(sample_rate_Hz, audio_block_samples);
 #define JMS_QUAD 1
 #ifdef JMS_QUAD
 AudioInputI2SQuad_F32 i2s_quadIn_f32(audio_settings);  // 4 inputs available in experimental Open Audio library. Ussing Terrane's code
+#warning new stuff
+#if 1
+AudioSwitch4_OA_F32      switchMicMute(audio_settings);      //Switch Mic between bitBucket and Normal
+AudioRecordQueue_F32     micBitBucketL(audio_settings);      //DataSink when Mic not in use
+#endif
 #else
 AudioInputI2SQuad i2s_quadIn;  // 4 inputs available only in Teensy audio and not Open Audio library.
 #endif
@@ -44,7 +49,14 @@ AudioPlayQueue_F32 cwToneData;  // The tone from the CW Exciter.
 //  Begin transmit signal chain.
 #ifdef JMS_QUAD
 //don't need the int2float object so just connect input straight to mixer
+#warning new stuff
+#if 1
+AudioConnection_F32 connect31(i2s_quadIn_f32, 0, switchMicMute, 0);
+AudioConnection_F32 connect3(switchMicMute, 0, mixer1_tx, 0);
+AudioConnection_F32 connect32(switchMicMute, 1, micBitBucketL, 0);
+#else
 AudioConnection_F32 connect3(i2s_quadIn_f32, 0, mixer1_tx, 0);  // Connect microphone mixer1 output 0 via gain control.
+#endif
 #else
 AudioConnection connect0(i2s_quadIn, 0, int2Float1_tx, 0);  // Microphone audio channel.  Must use int2Float because Open Audio does not have quad input.
 
@@ -249,7 +261,6 @@ void SetAudioOperatingState(RadioState operatingState) {
       // Connect audio paths
 #ifdef JMS_QUAD
      // AudioConnection_F32 doesn't support connect/disconnect 
-	 // Instead the AudioRecordQueue_F32 discards any received data
 #else
       patchCord1.connect();
       patchCord2.connect();
@@ -257,8 +268,10 @@ void SetAudioOperatingState(RadioState operatingState) {
       mixer5.gain(0, 1.0);    // Connect receiver audio from DSP.
       mixer5.gain(1, 0);      // Disconnect CW sidetone.
 #ifdef JMS_QUAD
-     // AudioConnection_F32 doesn't support connect/disconnect 
-	 // Instead the AudioRecordQueue_F32 discards any received data
+#warning new stuff
+	 //micBitBucketL.begin();
+	 //switchMicMute.setChannel(1);  // Bypass tx audio chain straight to micBitBucket
+	 switchMicMute.setChannel(1);
 #else
       connect0.disconnect();  // Disconnect microphone input data stream.
 #endif
@@ -302,6 +315,7 @@ void SetAudioOperatingState(RadioState operatingState) {
       controlAudioOut(ConfigData.audioOut, true);  // Mute all receiver audio.
       sgtl5000_1.unmuteLineout();
 #ifdef JMS_QUAD
+#warning new stuff
      // AudioConnection_F32 doesn't support connect/disconnect 
 	 // Instead the AudioRecordQueue_F32 discards any received data
 #else
@@ -312,7 +326,6 @@ void SetAudioOperatingState(RadioState operatingState) {
       mixer5.gain(1, 0);        // Stop sidetone audio.
 #ifdef JMS_QUAD
      // AudioConnection_F32 doesn't support connect/disconnect 
-	 // Instead the AudioRecordQueue_F32 discards any received data
 #else
       connect0.connect();       // Connect microphone input data stream.
 #endif
@@ -320,7 +333,12 @@ void SetAudioOperatingState(RadioState operatingState) {
       ADC_RX_I.clear();
       ADC_RX_Q.end();
       ADC_RX_Q.clear();
-
+#ifdef JMS_QUAD
+#warning new stuff
+	 switchMicMute.setChannel(0);  // Connect Mic to tx audio chain  
+	 //micBitBucketL.end();// Don't need micBitBucket
+#endif
+ 
       mixer1_tx.gain(0, 1);       // microphone audio on.
       mixer1_tx.gain(1, 0);       // testTone off.
       mixer_rxtx_I.gain(0, 1.0);  // Connect transmitter back-end to Audio Adapter.
@@ -351,8 +369,7 @@ void SetAudioOperatingState(RadioState operatingState) {
 
       Q_in_L_Ex.begin();  // I channel Microphone audio
       Q_in_R_Ex.begin();  // Q channel Microphone audio
-
-      // Update equalizer.  Update first 14 only.  Last two are constant.
+     // Update equalizer.  Update first 14 only.  Last two are constant.
       for (int i = 0; i < 14; i = i + 1) dbBand1[i] = static_cast<float32_t>(ConfigData.equalizerXmt[i]);
 
       txEqualizer.equalizerNew(16, &fBand1[0], &dbBand1[0], 249, &equalizeCoeffs[0], 65.0f);
@@ -367,7 +384,6 @@ void SetAudioOperatingState(RadioState operatingState) {
       sgtl5000_1.unmuteLineout();
 #ifdef JMS_QUAD
      // AudioConnection_F32 doesn't support connect/disconnect 
-	 // Instead the AudioRecordQueue_F32 discards any received data
 #else
       patchCord1.connect();
       patchCord2.connect();
@@ -392,8 +408,10 @@ void SetAudioOperatingState(RadioState operatingState) {
       mixer1_tx.gain(2, 0);  // testTone 2 off.
 
 #ifdef JMS_QUAD
+#warning new stuff
      // AudioConnection_F32 doesn't support connect/disconnect 
-	 // Instead the AudioRecordQueue_F32 discards any received data
+	 //micBitBucketL.begin();
+	 switchMicMute.setChannel(1);  // Bypass tx audio chain straight to micBitBucket
 #else
       connect0.disconnect();      // Disconnect microphone input data stream.
 #endif
@@ -454,8 +472,10 @@ void SetAudioOperatingState(RadioState operatingState) {
       mixer5.gain(0, 0);        // Stop receiver audio.
       mixer5.gain(1, 0);        // Stop sidetone audio.
 #ifdef JMS_QUAD
+#warning new stuff
      // AudioConnection_F32 doesn't support connect/disconnect 
-	 // Instead the AudioRecordQueue_F32 discards any received data
+	 //micBitBucketL.begin();
+	 switchMicMute.setChannel(1);  // Bypass tx audio chain straight to micBitBucket
 #else
       connect0.disconnect();    // Disconnect microphone input data stream.
 #endif
@@ -505,6 +525,7 @@ void SetAudioOperatingState(RadioState operatingState) {
       Q_in_L_Ex.begin();  // I channel Microphone audio
       Q_in_R_Ex.begin();  // Q channel Microphone audio
 
+
       // Update equalizer.  Update first 14 only.  Last two are constant.
       for (int i = 0; i < 14; i = i + 1) dbBand1[i] = ConfigData.equalizerXmt[i];
 
@@ -533,8 +554,10 @@ void SetAudioOperatingState(RadioState operatingState) {
       mixer5.gain(0, 0);        // Disconnect receiver audio from DSP.
       mixer5.gain(1, 1.0);      // Connect CW sidetone.
 #ifdef JMS_QUAD
+#warning new stuff
      // AudioConnection_F32 doesn't support connect/disconnect 
-	 // Instead the AudioRecordQueue_F32 discards any received data
+	 //micBitBucketL.begin();
+	 switchMicMute.setChannel(1);  // Bypass tx audio chain straight to micBitBucket
 #else
       connect0.disconnect();    // Disconnect microphone input data stream.
 #endif
@@ -583,6 +606,7 @@ void SetAudioOperatingState(RadioState operatingState) {
       Q_in_L_Ex.begin();  // I channel Microphone audio
       Q_in_R_Ex.begin();  // Q channel Microphone audio
 
+
       // Speaker and headphones should be unmuted according to current audio out state for sidetone.
       controlAudioOut(ConfigData.audioOut, false);
       sgtl5000_1.unmuteLineout();
@@ -598,8 +622,10 @@ void SetAudioOperatingState(RadioState operatingState) {
       controlAudioOut(AudioState::MUTE_BOTH, true);  // Mute all audio.
       sgtl5000_1.unmuteLineout();
 #ifdef JMS_QUAD
+#warning new stuff
      // AudioConnection_F32 doesn't support connect/disconnect 
-	 // Instead the AudioRecordQueue_F32 discards any received data
+	 //micBitBucketL.begin();
+	 switchMicMute.setChannel(1);  // Bypass tx audio chain straight to micBitBucket
 #else
       connect0.disconnect();  // Disconnect microphone input data stream.
 #endif
@@ -644,8 +670,11 @@ void SetAudioOperatingState(RadioState operatingState) {
       }
 
 #ifdef JMS_QUAD
+#warning new stuff
      // AudioConnection_F32 doesn't support connect/disconnect 
 	 // Instead the AudioRecordQueue_F32 discards any received data
+	 //micBitBucketL.begin();
+	 switchMicMute.setChannel(1);  // Bypass tx audio chain straight to micBitBucket
 #else
       patchCord1.connect();
       patchCord2.connect();
@@ -689,8 +718,11 @@ void SetAudioOperatingState(RadioState operatingState) {
       mixer_rxtx_I.gain(1, 0.0);  // Disconnect headphone path to Audio Adapter.
       mixer_rxtx_Q.gain(1, 0.0);
 #ifdef JMS_QUAD
+#warning new stuff
      // AudioConnection_F32 doesn't support connect/disconnect 
 	 // Instead the AudioRecordQueue_F32 discards any received data
+	 //micBitBucketL.begin();
+	 switchMicMute.setChannel(1);  // Bypass tx audio chain straight to micBitBucket
 #else
       patchCord1.connect();
       patchCord2.connect();
