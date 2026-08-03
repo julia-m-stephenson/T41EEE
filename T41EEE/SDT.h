@@ -550,8 +550,8 @@ extern int32_t NCOFreq;  // AFP 04-16-22
 // Teensy and OpenAudio objects which need to be global.  Revised by KF5N July 24, 2024
 extern AudioAmplifier volumeAdjust;
 #define JMS_QUAD 1
-#warning // need to find a place for this define 
 #ifdef JMS_QUAD
+#warning JMS_QUAD enabled
 extern AudioRecordQueue_F32 ADC_RX_I;  // Receiver I channel from ADC PCM1808, 32 bit.
 extern AudioRecordQueue_F32 ADC_RX_Q;  // Receiver Q channel from ADC PCM1808, 32 bit.
 #else
