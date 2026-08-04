@@ -364,7 +364,7 @@ void SetAudioOperatingState(RadioState operatingState) {
 
       break;
 
-    case RadioState::SSB_CALIBRATE_STATE:
+    case RadioState::SSB_CALIBRATE_STATE:// TRANSMIT
       SampleRate = SAMPLE_RATE_48K;
       InitializeDataArrays();                        // I2S sample rate set in this function.
       controlAudioOut(AudioState::MUTE_BOTH, true);  // Mute all audio.
@@ -381,6 +381,11 @@ void SetAudioOperatingState(RadioState operatingState) {
       ADC_RX_I.clear();
       ADC_RX_Q.end();
       ADC_RX_Q.clear();
+	  // Just stop everything This changes behaviour
+      Q_in_L_Ex.end();  // Transmit I channel path.
+      Q_in_R_Ex.end();  // Transmit Q channel path.
+      Q_in_L_Ex.clear();
+      Q_in_R_Ex.clear();
 
       cessb1.setSampleRate_Hz(48000);  ////
 
@@ -428,18 +433,17 @@ void SetAudioOperatingState(RadioState operatingState) {
         mixer2_tx.gain(1, 1.0);
       }
 
-      Q_out_L_Ex.setBehaviour(AudioPlayQueue_F32::ORIGINAL);  // Need this as CW will put into wrong mode.  Greg KF5N August 4, 2024.
-      Q_out_R_Ex.setBehaviour(AudioPlayQueue_F32::ORIGINAL);
       Q_in_L_Ex.begin();  // I channel Microphone audio
       Q_in_R_Ex.begin();  // Q channel Microphone audio
-      ADC_RX_I.begin();   // Calibration is full duplex!  Activate receiver data.  No demodulation during calibrate, spectrum only.
-      ADC_RX_Q.begin();
-
+      Q_out_L_Ex.setBehaviour(AudioPlayQueue_F32::ORIGINAL);  // Need this as CW will put into wrong mode.  Greg KF5N August 4, 2024.
+      Q_out_R_Ex.setBehaviour(AudioPlayQueue_F32::ORIGINAL);
       // Update equalizer.  Update first 14 only.  Last two are constant.
       for (int i = 0; i < 14; i = i + 1) dbBand1[i] = ConfigData.equalizerXmt[i];
 
       txEqualizer.equalizerNew(16, &fBand1[0], &dbBand1[0], 249, &equalizeCoeffs[0], 65.0f);
       updateMic();
+      ADC_RX_I.begin();   // Calibration is full duplex!  Activate receiver data.  No demodulation during calibrate, spectrum only.
+      ADC_RX_Q.begin();
 
       break;
 

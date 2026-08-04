@@ -1148,10 +1148,17 @@ void TxCalibrate::MakeFFTData() {
 
   float32_t* iBuffer = nullptr;  // I and Q pointers needed for one-time read of record queues.
   float32_t* qBuffer = nullptr;
-
+  int32_t lAvailable ;
+  int32_t rAvailable;
+  int32_t iAvailable;
+  int32_t qAvailable;
+  int exit=0;
+  do {// Loop until we have a full RX buffer Send TX if available
+  lAvailable = Q_in_L_Ex.available();
+  rAvailable = Q_in_R_Ex.available();
   // Read incoming I and Q audio blocks from the SSB exciter.
   // Are there at least N_BLOCKS buffers in each channel available ?
-  if (static_cast<uint32_t>(Q_in_L_Ex.available()) > 15 and static_cast<uint32_t>(Q_in_R_Ex.available()) > 15) {
+  if ((lAvailable > 15) and (rAvailable > 15)) {
     for (unsigned i = 0; i < 16; i++) {
 
       iBuffer = Q_in_L_Ex.readBuffer();
@@ -1206,15 +1213,21 @@ void TxCalibrate::MakeFFTData() {
 
     Q_out_L_Ex.play(float_buffer_L_EX, dataWidth);  // play it!  This is the I channel from the Audio Adapter line out to QSE I input.
     Q_out_R_Ex.play(float_buffer_R_EX, dataWidth);  // play it!  This is the Q channel from the Audio Adapter line out to QSE Q input.
+	Serial.printf("T");
   } else {
-    fftSuccess = false;  // Not enough transmit data.
-    Serial.printf("Failed to get enough I and Q transmitter data!\n");
+//    fftSuccess = false;  // Not enough transmit data.
+//    Serial.printf("Failed to get enough I and Q transmitter data!\n");
+//	TxCalibrate::flushTxBuffers();
+//	Serial.printf("TX:%d\n",lAvailable);
   }
   // End of transmit code.  Begin receive code.
 
   // Get audio samples from the audio  buffers and convert them to float.
   // Read in 16 blocks of 128 samples in I and Q if available.
-  if (static_cast<uint32_t>(ADC_RX_I.available()) > 15 && static_cast<uint32_t>(ADC_RX_Q.available()) > 15) {
+  iAvailable = ADC_RX_I.available();
+  qAvailable = ADC_RX_Q.available();
+
+  if ((iAvailable> 15) and (qAvailable > 15)) {
     for (unsigned i = 0; i < N_BLOCKS; i++) {
       /**********************************************************************************  AFP 12-31-20
           Using arm_Math library, convert to float one buffer_size.
@@ -1266,11 +1279,16 @@ void TxCalibrate::MakeFFTData() {
     updateDisplayFlag = true;
     if (fftActive) ZoomFFTExe(BUFFER_SIZE * N_BLOCKS);
     fftSuccess = true;
+	exit=1;
+	Serial.printf("R");
   }  // End of receive code
   else {
-    fftSuccess = false;  // Insufficient receive buffers to make FFT.  Do not plot FFT data!
-    Serial.printf("FFT failed due to insufficient I and Q receive data!\n");
+//    fftSuccess = false;  // Insufficient receive buffers to make FFT.  Do not plot FFT data!
+//    Serial.printf("FFT failed due to insufficient I and Q receive data!\n");
+//	TxCalibrate::flushRxBuffers();
+//	Serial.printf("RX:%d\n",iAvailable);
   }
+  } while(exit==0);
 }
 
 
