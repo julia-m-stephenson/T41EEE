@@ -1,3 +1,28 @@
+/*
+T41EVE Copyright 2026 Gregory Raven
+
+This file is part of T41EVE.
+
+T41EVE is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+T41EVE is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with T41EVE. If not, see <https://www.gnu.org/licenses/>.
+
+  This comment block must appear in the load page (e.g., main() or setup()) in any source code
+  that uses code presented as whole or part of the T41-EP source code.
+
+  (c) Frank Dziock, DD4WH, 2020_05_8
+  "TEENSY CONVOLUTION SDR" substantially modified by Jack Purdum, W8TEE, and Al Peter, AC8GY
+
+  This software is made available under the GNU GPLv3 license agreement. If commercial use of this
+  software is planned, we would appreciate it if the interested parties contact Jack Purdum, W8TEE, 
+  and Al Peter, AC8GY.
+
+  Any and all other uses, written or implied, by the GPLv3 license are forbidden without written 
+  permission from from Jack Purdum, W8TEE, and Al Peter, AC8GY.
+*/
+
 // Class TxCalibrate.  Greg KF5N July 10, 2024
 // Re-factored August 2025.
 
@@ -89,8 +114,8 @@ void TxCalibrate::warmUpCal() {
   updateDisplayFlag = false;
   // Find peak of spectrum, which is 512 wide.  Use this to adjust spectrum peak to top of spectrum display.
   arm_max_q15(pixelnew, 512, &rawSpectrumPeak, &index_of_max);
-//  Serial.printf("TX rawSpectrumPeak = %d count = %d i = %d\n", rawSpectrumPeak, count, i);
-//  Serial.printf("TX index_of_max = %d\n", index_of_max);
+  //  Serial.printf("TX rawSpectrumPeak = %d count = %d i = %d\n", rawSpectrumPeak, count, i);
+  //  Serial.printf("TX index_of_max = %d\n", index_of_max);
   if (index_of_max < 251 or index_of_max > 260) Serial.printf("Problem with TX warmUpCal index_of_max=%d\n",index_of_max);
 }
 
@@ -1152,6 +1177,8 @@ void TxCalibrate::MakeFFTData() {
 
   float32_t* iBuffer = nullptr;  // I and Q pointers needed for one-time read of record queues.
   float32_t* qBuffer = nullptr;
+#ifdef JMS_QUAD
+  // Make code a bit more readable and allow debug
   int32_t lAvailable ;
   int32_t rAvailable;
   int32_t iAvailable;
@@ -1163,6 +1190,9 @@ void TxCalibrate::MakeFFTData() {
   // Read incoming I and Q audio blocks from the SSB exciter.
   // Are there at least N_BLOCKS buffers in each channel available ?
   if ((lAvailable > 15) and (rAvailable > 15)) {
+#else
+  if (static_cast<uint32_t>(Q_in_L_Ex.available()) > 15 and static_cast<uint32_t>(Q_in_R_Ex.available()) > 15) {
+#endif
     for (unsigned i = 0; i < 16; i++) {
 
       iBuffer = Q_in_L_Ex.readBuffer();
@@ -1219,19 +1249,27 @@ void TxCalibrate::MakeFFTData() {
     Q_out_R_Ex.play(float_buffer_R_EX, dataWidth);  // play it!  This is the Q channel from the Audio Adapter line out to QSE Q input.
 	Serial.printf("T");
   } else {
+#ifdef JMS_QUAD
 //    fftSuccess = false;  // Not enough transmit data.
 //    Serial.printf("Failed to get enough I and Q transmitter data!\n");
-//	TxCalibrate::flushTxBuffers();
 //	Serial.printf("TX:%d\n",lAvailable);
+#else
+    fftSuccess = false;  // Not enough transmit data.
+    Serial.printf("Failed to get enough I and Q transmitter data!\n");
+#endif
   }
   // End of transmit code.  Begin receive code.
 
   // Get audio samples from the audio  buffers and convert them to float.
   // Read in 16 blocks of 128 samples in I and Q if available.
+#ifdef JMS_QUAD
   iAvailable = ADC_RX_I.available();
   qAvailable = ADC_RX_Q.available();
 
   if ((iAvailable> 15) and (qAvailable > 15)) {
+#else
+  if (static_cast<uint32_t>(ADC_RX_I.available()) > 15 and static_cast<uint32_t>(ADC_RX_Q.available()) > 15) {
+#endif
     for (unsigned i = 0; i < N_BLOCKS; i++) {
       /**********************************************************************************  AFP 12-31-20
           Using arm_Math library, convert to float one buffer_size.
@@ -1247,8 +1285,8 @@ void TxCalibrate::MakeFFTData() {
       ADC_RX_I.freeBuffer();
       ADC_RX_Q.freeBuffer();
     }
-    rfGainValue = pow(10, static_cast<float32_t>(ConfigData.rfGain[ConfigData.currentBand]) / 20);  //AFP 2-11-23
 
+    rfGainValue = pow(10, static_cast<float32_t>(ConfigData.rfGain[ConfigData.currentBand]) / 20);  //AFP 2-11-23
     arm_scale_f32(float_buffer_L, rfGainValue, float_buffer_L, BUFFER_SIZE * N_BLOCKS);  //AFP 2-11-23
     arm_scale_f32(float_buffer_R, rfGainValue, float_buffer_R, BUFFER_SIZE * N_BLOCKS);  //AFP 2-11-23
 
@@ -1283,16 +1321,24 @@ void TxCalibrate::MakeFFTData() {
     updateDisplayFlag = true;
     if (fftActive) ZoomFFTExe(BUFFER_SIZE * N_BLOCKS);
     fftSuccess = true;
-	exit=1;
+#ifdef JMS_QUAD
+	exit=1; // we have ebough RX data escape from do..while loop
 	Serial.printf("R");
+#endif
   }  // End of receive code
   else {
+#ifdef JMS_QUAD
 //    fftSuccess = false;  // Insufficient receive buffers to make FFT.  Do not plot FFT data!
 //    Serial.printf("FFT failed due to insufficient I and Q receive data!\n");
-//	TxCalibrate::flushRxBuffers();
 //	Serial.printf("RX:%d\n",iAvailable);
+#else
+    fftSuccess = false;  // Insufficient receive buffers to make FFT.  Do not plot FFT data!
+    Serial.printf("FFT failed due to insufficient I and Q receive data!\n");
+#endif
   }
-  } while(exit==0);
+#ifdef JMS_QUAD
+  } while(exit==0);// keep looping (FOREVER!!!!) until enough RX data received
+#endif
 }
 
 

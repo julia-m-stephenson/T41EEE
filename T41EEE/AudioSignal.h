@@ -29,12 +29,10 @@ You should have received a copy of the GNU General Public License along with T41
 const float sample_rate_Hz = 48000.0;  // The transmitter operates at 48ksps.
 const int audio_block_samples = 128;   // Always 128
 AudioSettings_F32 audio_settings(sample_rate_Hz, audio_block_samples);
-#define JMS_QUAD 1
 #ifdef JMS_QUAD
 AudioInputI2SQuad_F32 i2s_quadIn_f32(audio_settings);    // 4 inputs available in experimental Open Audio library. Ussing Terrane's code
 AudioSwitch4_OA_F32      switchMicMute(audio_settings); //Switch Mic between bitBucket and Normal
 AudioRecordQueue_F32     micBitBucketL(audio_settings); //DataSink when Mic not in use
-
 #else
 AudioInputI2SQuad i2s_quadIn;  // 4 inputs available only in Teensy audio and not Open Audio library.
 #endif
@@ -74,7 +72,6 @@ AudioPlayQueue_F32 cwToneData;  // The tone from the CW Exciter.
 AudioConnection_F32 connect31(i2s_quadIn_f32, 0, switchMicMute, 0);
 AudioConnection_F32 connect3(switchMicMute, 0, mixer1_tx, 0);
 AudioConnection_F32 connect32(switchMicMute, 1, micBitBucketL, 0);
-
 #else
 AudioConnection connect0(i2s_quadIn, 0, int2Float1_tx, 0);  // Microphone audio channel.  Must use int2Float because Open Audio does not have quad input.
 
@@ -140,7 +137,6 @@ AudioConnection_F32 patchCord2(i2s_quadIn_f32, 2, ADC_RX_Q, 0);  // This data st
 AudioConnection patchCord1(i2s_quadIn, 3, ADC_RX_I, 0);  // Receiver I and Q channel data stream.
 AudioConnection patchCord2(i2s_quadIn, 2, ADC_RX_Q, 0);  // This data stream goes to sketch code for processing.
 #endif
-
 
 AudioConnection_F32 patchCord3(audioOutQueue, 0, mixer5, 0);  // mixer5 selects receiver or CW sidetone audio.
 AudioConnection_F32 patchCord35(sidetoneOutQueue, 0, mixer5, 1);
@@ -396,8 +392,8 @@ void SetAudioOperatingState(RadioState operatingState) {
 #ifdef JMS_QUAD
      // AudioConnection_F32 doesn't support connect/disconnect 
 #else
-      patchCord1.connect();
-      patchCord2.connect();
+      patchCord1.connect();  // Receiver I channel
+      patchCord2.connect();  // Receiver Q channel
 #endif
       mixer5.gain(0, 0);     // Stop receiver audio.
       mixer5.gain(1, 0);     // Stop sidetone audio.
@@ -539,7 +535,6 @@ void SetAudioOperatingState(RadioState operatingState) {
       Q_in_L_Ex.begin();  // I channel Microphone audio
       Q_in_R_Ex.begin();  // Q channel Microphone audio
 
-
       // Update equalizer.  Update first 14 only.  Last two are constant.
       for (int i = 0; i < 14; i = i + 1) dbBand1[i] = ConfigData.equalizerXmt[i];
 
@@ -616,7 +611,6 @@ void SetAudioOperatingState(RadioState operatingState) {
       Q_in_L_Ex.begin();  // I channel Microphone audio
       Q_in_R_Ex.begin();  // Q channel Microphone audio
 
-
       // Speaker and headphones should be unmuted according to current audio out state for sidetone.
       controlAudioOut(ConfigData.audioOut, false);
       sgtl5000_1.unmuteLineout();
@@ -679,7 +673,7 @@ void SetAudioOperatingState(RadioState operatingState) {
 #ifdef JMS_QUAD
 	 switchMicMute.setChannel(1);  // Bypass tx audio chain straight to micBitBucket
 #else
-      patchCord1.connect();
+      patchCord1.connect();  // Connect I and Q receiver data converters.
       patchCord2.connect();
 #endif
       ADC_RX_I.begin();  // Calibration is full duplex!

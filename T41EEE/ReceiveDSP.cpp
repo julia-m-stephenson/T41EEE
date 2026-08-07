@@ -1,3 +1,28 @@
+/*
+T41EVE Copyright 2026 Gregory Raven
+
+This file is part of T41EVE.
+
+T41EVE is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+T41EVE is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with T41EVE. If not, see <https://www.gnu.org/licenses/>.
+
+  This comment block must appear in the load page (e.g., main() or setup()) in any source code
+  that uses code presented as whole or part of the T41-EP source code.
+
+  (c) Frank Dziock, DD4WH, 2020_05_8
+  "TEENSY CONVOLUTION SDR" substantially modified by Jack Purdum, W8TEE, and Al Peter, AC8GY
+
+  This software is made available under the GNU GPLv3 license agreement. If commercial use of this
+  software is planned, we would appreciate it if the interested parties contact Jack Purdum, W8TEE, 
+  and Al Peter, AC8GY.
+
+  Any and all other uses, written or implied, by the GPLv3 license are forbidden without written 
+  permission from from Jack Purdum, W8TEE, and Al Peter, AC8GY.
+*/
+
 // Receive DSP.  ProcessIQData is the primary DSP function of the receiver.
 
 #include "SDT.h"
@@ -28,13 +53,14 @@ bool ReceiveDSP::ProcessIQData() {
   uint32_t AudioMaxIndex;
   float rfGainValue;
   int rfGain;
+#ifdef JMS_QUAD
   /*Serial.printf("ADC_RX_I.available=%d ADC_RX_Q.available=%d \n",
                 ADC_RX_I.available(),
                 ADC_RX_Q.available() );*/
+#endif
   // Are there at least N_BLOCKS buffers in each channel available ?  N_BLOCKS should be 16.  Fill float_buffer_L/R[2048].
   if (static_cast<uint32_t>(ADC_RX_I.available()) > 15 && static_cast<uint32_t>(ADC_RX_Q.available()) > 15) {
     usec = 0;
-	
     // Get audio samples from the audio  buffers and convert them to float.
     // Read in 16 blocks and 128 samples in I and Q.  16 * 128 = 2048  (N_BLOCKS = 16)
     for (unsigned i = 0; i < N_BLOCKS; i++) {
@@ -42,8 +68,6 @@ bool ReceiveDSP::ProcessIQData() {
           Using arm_Math library, convert to float one buffer_size.
           Float_buffer samples are now standardized from > -1.0 to < 1.0
       **********************************************************************************/
-#define JMS_QUAD 1
-#warning // need to find a place for this define 
 #ifdef JMS_QUAD
       arm_copy_f32(ADC_RX_Q.readBuffer(), &float_buffer_L[BUFFER_SIZE * i], BUFFER_SIZE);  // move input buffer as float 32bit.  BUFFER_SIZE = 128.
       arm_copy_f32(ADC_RX_I.readBuffer(), &float_buffer_R[BUFFER_SIZE * i], BUFFER_SIZE);  // move input buffer as float 32bit.  BUFFER_SIZE = 128.
@@ -51,8 +75,6 @@ bool ReceiveDSP::ProcessIQData() {
       arm_q15_to_float(ADC_RX_Q.readBuffer(), &float_buffer_L[BUFFER_SIZE * i], BUFFER_SIZE);  // convert int_buffer to float 32bit.  BUFFER_SIZE = 128.
       arm_q15_to_float(ADC_RX_I.readBuffer(), &float_buffer_R[BUFFER_SIZE * i], BUFFER_SIZE);  // convert int_buffer to float 32bit
 #endif
-
-
       ADC_RX_I.freeBuffer();
       ADC_RX_Q.freeBuffer();
     }  // end for loop

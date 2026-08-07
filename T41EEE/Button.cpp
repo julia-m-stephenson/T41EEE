@@ -1,3 +1,28 @@
+/*
+T41EVE Copyright 2026 Gregory Raven
+
+This file is part of T41EVE.
+
+T41EVE is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+T41EVE is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with T41EVE. If not, see <https://www.gnu.org/licenses/>.
+
+  This comment block must appear in the load page (e.g., main() or setup()) in any source code
+  that uses code presented as whole or part of the T41-EP source code.
+
+  (c) Frank Dziock, DD4WH, 2020_05_8
+  "TEENSY CONVOLUTION SDR" substantially modified by Jack Purdum, W8TEE, and Al Peter, AC8GY
+
+  This software is made available under the GNU GPLv3 license agreement. If commercial use of this
+  software is planned, we would appreciate it if the interested parties contact Jack Purdum, W8TEE, 
+  and Al Peter, AC8GY.
+
+  Any and all other uses, written or implied, by the GPLv3 license are forbidden without written 
+  permission from from Jack Purdum, W8TEE, and Al Peter, AC8GY.
+*/
+
 // Button class
 
 #include "SDT.h"
@@ -191,7 +216,7 @@ void Button::ExecuteButtonPress(MenuSelect val) {
 
   switch (val) {
     case MenuSelect::MENU_OPTION_SELECT:  // 1
-
+      menucontrol.top = false;
       ShowMenu(&topMenus[mainMenuIndex], PRIMARY_MENU);
       functionPtr[mainMenuIndex]();  // These are processed in MenuProcessing.cpp
       break;
@@ -199,7 +224,7 @@ void Button::ExecuteButtonPress(MenuSelect val) {
     case MenuSelect::MAIN_MENU_UP:  // 2
       ButtonMenuIncrease();
       ShowMenu(&topMenus[mainMenuIndex], PRIMARY_MENU);
-
+      menucontrol.top = true;
       break;
 
     case MenuSelect::BAND_UP:  // 3
@@ -213,6 +238,7 @@ void Button::ExecuteButtonPress(MenuSelect val) {
     case MenuSelect::MAIN_MENU_DN:  // 5
       ButtonMenuDecrease();
       ShowMenu(&topMenus[mainMenuIndex], PRIMARY_MENU);
+      menucontrol.top = true;
       break;
 
     case MenuSelect::BAND_DN:  // 6

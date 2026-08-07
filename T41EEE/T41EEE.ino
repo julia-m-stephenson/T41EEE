@@ -1,3 +1,28 @@
+/*
+T41EVE Copyright 2026 Gregory Raven
+
+This file is part of T41EVE.
+
+T41EVE is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+T41EVE is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with T41EVE. If not, see <https://www.gnu.org/licenses/>.
+
+  This comment block must appear in the load page (e.g., main() or setup()) in any source code
+  that uses code presented as whole or part of the T41-EP source code.
+
+  (c) Frank Dziock, DD4WH, 2020_05_8
+  "TEENSY CONVOLUTION SDR" substantially modified by Jack Purdum, W8TEE, and Al Peter, AC8GY
+
+  This software is made available under the GNU GPLv3 license agreement. If commercial use of this
+  software is planned, we would appreciate it if the interested parties contact Jack Purdum, W8TEE, 
+  and Al Peter, AC8GY.
+
+  Any and all other uses, written or implied, by the GPLv3 license are forbidden without written 
+  permission from from Jack Purdum, W8TEE, and Al Peter, AC8GY.
+*/
+
 // T41 Transceiver Arduino Sketch: T41EEE
 // "T41 Extreme Experimenters Edition"
 //
@@ -131,6 +156,7 @@ float32_t DMAMEM float_buffer_RTemp[2048];
 //======================================== Global structure declarations ===============================================
 config_t ConfigData;
 calibration_t CalData;
+menuControl menucontrol;
 
 Bands bands = { { // Revised band struct with mode and sideband.  Greg KF5N February 14, 2025
 //                  band low   band hi   name          mode                  sideband         FHiCut FLoCut FAMCut  Gain  type gain  AGC
@@ -874,9 +900,8 @@ FLASHMEM void setup() {
   Serial.begin(115200);
 
   // Check for CrashReport stored from previous run.
-
   if (CrashReport) {
-    // print info (hope Serial Monitor windows is open) 
+    /* print info (hope Serial Monitor windows is open) */
     Serial.print(CrashReport);
   }
 
@@ -1087,6 +1112,7 @@ void loop() {
   long ditTimerOff;  //AFP 09-22-22
   bool cwKeyDown;
   unsigned long cwBlockIndex;
+#ifdef JMS_QUAD
 /*
   Serial.printf("lastState=%d radioState=%d memory_used=%d memory_used_max=%d f32_memory_used=%d f32_memory_used_max=%d\n",
                 lastState,
@@ -1096,6 +1122,7 @@ void loop() {
                 (int)AudioStream_F32::f32_memory_used,
                 (int)AudioStream_F32::f32_memory_used_max);
 */
+#endif
   //  Radio state detection before entering the primary radio loop.
   if (bands.bands[ConfigData.currentBand].mode == RadioMode::SSB_MODE and digitalRead(PTT) == HIGH) radioState = RadioState::SSB_RECEIVE_STATE;
   if (bands.bands[ConfigData.currentBand].mode == RadioMode::SSB_MODE and digitalRead(PTT) == LOW) radioState = RadioState::SSB_TRANSMIT_STATE;
@@ -1117,7 +1144,17 @@ void loop() {
   // SSB and FT8 transmit operate via the main loop().  CW modes operate within independent while loops.  Don't stop in SSB and FT8 modes to read the buttons.
   if ((radioState != RadioState::SSB_TRANSMIT_STATE) and (radioState != RadioState::FT8_TRANSMIT_STATE) and (calibrateFlag == false) and (morseDecodeAdjustFlag == false)) {
     menu = readButton();
-    if (menu != MenuSelect::BOGUS_PIN_READ) button.ExecuteButtonPress(menu);
+      // Restrict allowed button selections if in top menu.
+      if (menucontrol.top == true)
+      {
+        if ((menu != MenuSelect::BOGUS_PIN_READ) and (menu == MenuSelect::MAIN_MENU_UP or menu == MenuSelect::MAIN_MENU_DN or menu == MenuSelect::MENU_OPTION_SELECT))
+          button.ExecuteButtonPress(menu);
+      }
+      else
+      {
+        if (menu != MenuSelect::BOGUS_PIN_READ)
+          button.ExecuteButtonPress(menu);
+      }
   }
 
   // Transition to new state if required and only if the radio state has changed.

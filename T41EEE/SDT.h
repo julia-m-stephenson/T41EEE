@@ -1,3 +1,28 @@
+/*
+T41EVE Copyright 2026 Gregory Raven
+
+This file is part of T41EVE.
+
+T41EVE is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+T41EVE is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with T41EVE. If not, see <https://www.gnu.org/licenses/>.
+
+  This comment block must appear in the load page (e.g., main() or setup()) in any source code
+  that uses code presented as whole or part of the T41-EP source code.
+
+  (c) Frank Dziock, DD4WH, 2020_05_8
+  "TEENSY CONVOLUTION SDR" substantially modified by Jack Purdum, W8TEE, and Al Peter, AC8GY
+
+  This software is made available under the GNU GPLv3 license agreement. If commercial use of this
+  software is planned, we would appreciate it if the interested parties contact Jack Purdum, W8TEE, 
+  and Al Peter, AC8GY.
+
+  Any and all other uses, written or implied, by the GPLv3 license are forbidden without written 
+  permission from from Jack Purdum, W8TEE, and Al Peter, AC8GY.
+*/
+
 // Includes and global variables.
 
 #pragma once
@@ -32,6 +57,7 @@
 constexpr int NUMBER_OF_SWITCHES = 18;  // Number of push button switches.
 constexpr int TEMPMON_ROOMTEMP = 25.0;
 #define SD_CS BUILTIN_SDCARD  // Works on T_3.6 and T_4.1 ...
+#define JMS_QUAD 1 // Enables Float32 Input Object Needs latest version of OpenAudio_ArduinoLibrary
 
 //======================================== Symbolic constants ==========================================================
 
@@ -271,6 +297,18 @@ enum class MenuSelect { MENU_OPTION_SELECT,
                         BEARING,
                         BOGUS_PIN_READ,
                         DEFAULT };
+
+// Menu functions struct.  This sets the current menu level.
+// This was adapted from T41EVE.
+struct menuControl
+{
+  bool top{false};
+  bool CWOptions{false};
+  bool subMenuSelect{false};
+  bool runOptionFunction{false};
+  bool runButtonFunction{false};
+};
+extern menuControl menucontrol;
 /*
 struct maps {
   char mapNames[50];
@@ -306,8 +344,11 @@ extern Bands bands;
 // Configuration data structure.
 struct config_t {
 
-  char versionSettings[10] = "E93_JMS1";  // This is required to be the first!
-
+#ifdef JMS_QUAD
+  char versionSettings[10] = "T41EQE.93";  // This is required to be the first!
+#else
+  char versionSettings[10] = "T41EEE.93";  // This is required to be the first!
+#endif
   bool AGCMode = true;
   float32_t AGCThreshold = -40.0;
   int speakerVolume = 30;
@@ -549,7 +590,6 @@ extern int32_t NCOFreq;  // AFP 04-16-22
 
 // Teensy and OpenAudio objects which need to be global.  Revised by KF5N July 24, 2024
 extern AudioAmplifier volumeAdjust;
-#define JMS_QUAD 1
 #ifdef JMS_QUAD
 #warning JMS_QUAD enabled
 extern AudioRecordQueue_F32 ADC_RX_I;  // Receiver I channel from ADC PCM1808, 32 bit.
