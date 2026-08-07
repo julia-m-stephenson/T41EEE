@@ -32,7 +32,7 @@ AudioSettings_F32 audio_settings(sample_rate_Hz, audio_block_samples);
 #ifdef JMS_QUAD
 AudioInputI2SQuad_F32 i2s_quadIn_f32(audio_settings);    // 4 inputs available in experimental Open Audio library. Ussing Terrane's code
 AudioSwitch4_OA_F32      switchMicMute(audio_settings); //Switch Mic between bitBucket and Normal
-AudioRecordQueue_F32     micBitBucketL(audio_settings); //DataSink when Mic not in use
+//AudioRecordQueue_F32     micBitBucketL(audio_settings); //DataSink when Mic not in use
 #else
 AudioInputI2SQuad i2s_quadIn;  // 4 inputs available only in Teensy audio and not Open Audio library.
 #endif
@@ -71,7 +71,7 @@ AudioPlayQueue_F32 cwToneData;  // The tone from the CW Exciter.
 //don't need the int2float object so just connect input via mute mixer
 AudioConnection_F32 connect31(i2s_quadIn_f32, 0, switchMicMute, 0);
 AudioConnection_F32 connect3(switchMicMute, 0, mixer1_tx, 0);
-AudioConnection_F32 connect32(switchMicMute, 1, micBitBucketL, 0);
+//AudioConnection_F32 connect32(switchMicMute, 1, micBitBucketL, 0);
 #else
 AudioConnection connect0(i2s_quadIn, 0, int2Float1_tx, 0);  // Microphone audio channel.  Must use int2Float because Open Audio does not have quad input.
 

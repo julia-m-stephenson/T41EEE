@@ -1247,7 +1247,7 @@ void TxCalibrate::MakeFFTData() {
 
     Q_out_L_Ex.play(float_buffer_L_EX, dataWidth);  // play it!  This is the I channel from the Audio Adapter line out to QSE I input.
     Q_out_R_Ex.play(float_buffer_R_EX, dataWidth);  // play it!  This is the Q channel from the Audio Adapter line out to QSE Q input.
-	Serial.printf("T");
+//	Serial.printf("T");
   } else {
 #ifdef JMS_QUAD
 //    fftSuccess = false;  // Not enough transmit data.
@@ -1323,7 +1323,7 @@ void TxCalibrate::MakeFFTData() {
     fftSuccess = true;
 #ifdef JMS_QUAD
 	exit=1; // we have ebough RX data escape from do..while loop
-	Serial.printf("R");
+//	Serial.printf("R");
 #endif
   }  // End of receive code
   else {
