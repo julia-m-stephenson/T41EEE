@@ -1,3 +1,28 @@
+/*
+T41EVE Copyright 2026 Gregory Raven
+
+This file is part of T41EVE.
+
+T41EVE is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+
+T41EVE is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License along with T41EVE. If not, see <https://www.gnu.org/licenses/>.
+
+  This comment block must appear in the load page (e.g., main() or setup()) in any source code
+  that uses code presented as whole or part of the T41-EP source code.
+
+  (c) Frank Dziock, DD4WH, 2020_05_8
+  "TEENSY CONVOLUTION SDR" substantially modified by Jack Purdum, W8TEE, and Al Peter, AC8GY
+
+  This software is made available under the GNU GPLv3 license agreement. If commercial use of this
+  software is planned, we would appreciate it if the interested parties contact Jack Purdum, W8TEE, 
+  and Al Peter, AC8GY.
+
+  Any and all other uses, written or implied, by the GPLv3 license are forbidden without written 
+  permission from from Jack Purdum, W8TEE, and Al Peter, AC8GY.
+*/
+
 // Teensy and Open Audio Signal Chains include file.
 
 // Common to Transmitter and Receiver.
@@ -16,11 +41,10 @@ AudioInputI2SQuad i2s_quadIn;  // 4 inputs available only in Teensy audio and no
 AudioOutputI2SQuad_F32 i2s_quadOut_f32(audio_settings);
 
 // Transmitter
-
 AudioControlSGTL5000 sgtl5000_1;   
 #ifdef JMS_QUAD // Controller for the Teensy Audio Adapter.
 //not neeeded float conversion done in AudioInputI2SQuad_F32
-#else                                               
+#else
 AudioConvert_I16toF32 int2Float1_tx;                                              // Converts Int16 to Float.
 #endif
 AudioEffectGain_F32 micGain(audio_settings), compGainCompensate(audio_settings);  // Microphone gain control.
@@ -30,7 +54,7 @@ radioCESSB_Z_transmit_F32 cessb1;
 
 #ifdef JMS_QUAD
 //not neeeded float conversion done in AudioInputI2SQuad_F32
-#else                                               
+#else
 AudioConvert_F32toI16 float2Int1_tx, float2Int2_tx;  // Converts Float to Int16.  See class in AudioStream_F32.h
 #endif
 AudioSwitch4_OA_F32 switch3_tx, switch4_tx;
@@ -381,12 +405,13 @@ void SetAudioOperatingState(RadioState operatingState) {
       ADC_RX_I.clear();
       ADC_RX_Q.end();
       ADC_RX_Q.clear();
+#ifdef JMS_QUAD
 	  // Just stop everything This changes behaviour
       Q_in_L_Ex.end();  // Transmit I channel path.
       Q_in_R_Ex.end();  // Transmit Q channel path.
       Q_in_L_Ex.clear();
       Q_in_R_Ex.clear();
-
+#endif
       cessb1.setSampleRate_Hz(48000);  ////
 
       // Test tone enabled and connected
@@ -433,17 +458,18 @@ void SetAudioOperatingState(RadioState operatingState) {
         mixer2_tx.gain(1, 1.0);
       }
 
-      Q_in_L_Ex.begin();  // I channel Microphone audio
-      Q_in_R_Ex.begin();  // Q channel Microphone audio
       Q_out_L_Ex.setBehaviour(AudioPlayQueue_F32::ORIGINAL);  // Need this as CW will put into wrong mode.  Greg KF5N August 4, 2024.
       Q_out_R_Ex.setBehaviour(AudioPlayQueue_F32::ORIGINAL);
+      Q_in_L_Ex.begin();  // I channel Microphone audio
+      Q_in_R_Ex.begin();  // Q channel Microphone audio
+      ADC_RX_I.begin();   // Calibration is full duplex!  Activate receiver data.  No demodulation during calibrate, spectrum only.
+      ADC_RX_Q.begin();
+
       // Update equalizer.  Update first 14 only.  Last two are constant.
       for (int i = 0; i < 14; i = i + 1) dbBand1[i] = ConfigData.equalizerXmt[i];
 
       txEqualizer.equalizerNew(16, &fBand1[0], &dbBand1[0], 249, &equalizeCoeffs[0], 65.0f);
       updateMic();
-      ADC_RX_I.begin();   // Calibration is full duplex!  Activate receiver data.  No demodulation during calibrate, spectrum only.
-      ADC_RX_Q.begin();
 
       break;
 
